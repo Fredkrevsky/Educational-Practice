@@ -22,43 +22,52 @@ begin
   end;
 end;
 
-procedure PSwap(P, q: PPointer);
-var
-  Temp: PPointer;
+function PGetPrev(PHead, ToFind: PPointer): PPointer;
 begin
-  New(Temp);
-  Temp^.Data := P^.Data;
-  P^.Data := q^.Data;
-  q^.Data := Temp^.Data;
-  Dispose(Temp);
+  Result:=PHead;
+  while Result<>ToFind do
+    Result:=Result^.Next;
 end;
 
-procedure WSwap(P, q: WPointer);
+procedure PSwap(PHead, Temp1, Temp2: PPointer);
 var
-  Temp: WPointer;
+  p1, n1: PPointer;
+  p2, n2: PPointer;
 begin
-  New(Temp);
-  Temp^.Data := P^.Data;
-  P^.Data := q^.Data;
-  q^.Data := Temp^.Data;
-  Dispose(Temp);
+
+  p1:=PGetPrev(PHead, Temp1);
+  n1:=Temp1^.Next;
+  p2:=PGetPrev(PHead, Temp2);
+  n2:=Temp2^.Next;
+
+  p1^.next:=Temp2;
+  Temp2^.Next:=n1;
+  p2^.Next:=Temp1;
+  Temp1^.Next:=n2;
 end;
 
-procedure PSort(Head: PPointer; Field: Byte);
-var
-  Temp: PPointer;
+function WGetPrev(WHead, ToFind: WPointer): WPointer;
 begin
-  while Head^.Next <> nil do
-  begin
-    Temp := Head^.Next;
-    while Temp <> nil do
-    begin
-      if CompareProjects(Head, Temp, Field) then
-        PSwap(Head, Temp);
-      Temp := Temp^.Next
-    end;
-    Head := Head^.Next;
-  end;
+  Result:=WHead;
+  while Result<>ToFind do
+    Result:=Result^.Next;
+end;
+
+procedure WSwap(WHead, Temp1, Temp2: WPointer);
+var
+  p1, n1: WPointer;
+  p2, n2: WPointer;
+begin
+
+  p1:=WGetPrev(WHead, Temp1);
+  n1:=Temp1^.Next;
+  p2:=WGetPrev(WHead, Temp2);
+  n2:=Temp2^.Next;
+
+  p1^.next:=Temp2;
+  Temp2^.Next:=n1;
+  p2^.Next:=Temp1;
+  Temp1^.Next:=n2;
 end;
 
 Procedure Delete_Project(Previous: PPointer);
