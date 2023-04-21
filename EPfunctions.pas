@@ -28,7 +28,7 @@ type
     Name: string[20];
     MiddleName: string[20];
     Position: string[50];
-    Hours: Byte;
+    Hours: Integer;
     ManagerCode: Integer;
   end;
 
@@ -40,7 +40,7 @@ type
   FP = file of TProjectData;
   FW = file of TWorkerData;
 
-function ChooseList:Byte;
+function ChooseList: Byte;
 function PGetPrev(PHead, ToFind: PPointer): PPointer;
 function WGetPrev(WHead, ToFind: WPointer): WPointer;
 procedure PSwap(PHead, Temp1, Temp2: PPointer);
@@ -50,33 +50,53 @@ procedure WDelete(WHead, ToDelete: WPointer);
 procedure DisposeAll(var WHead: WPointer; var PHead: PPointer);
 procedure WriteToFile(PHead: PPointer; WHead: WPointer);
 procedure ReadFromFile(PHead: PPointer; WHead: WPointer);
-procedure EnterWorker(Head: WPointer);
-procedure EnterWorkers(Head: WPointer);
-procedure EnterProject(Head: PPointer);
-procedure EnterProjects(Head: PPointer);
-procedure PrintWorker(Head: WPointer);
-procedure PrintWorkers(Head: WPointer);
-procedure PrintProject(Head: PPointer);
-procedure PrintProjects(Head: PPointer);
+procedure EnterWorker(WHead: WPointer); // Проверка
+procedure EnterWorkers(WHead: WPointer); //
+procedure EnterProject(PHead: PPointer); //
+procedure EnterProjects(PHead: PPointer); //
+procedure PrintWorker(WHead: WPointer);
+procedure PrintWorkers(WHead: WPointer);
+procedure PrintProject(PHead: PPointer);
+procedure PrintProjects(PHead: PPointer);
 procedure MenuPrint(PHead: PPointer; WHead: WPointer);
-procedure MenuEnter(PHead: PPointer; WHead: WPointer);
+procedure MenuEnter(PHead: PPointer; WHead: WPointer); //
 
 implementation
 
 uses System.SysUtils;
 
-function ChooseList:Byte;
-var Menu:Char;
+function SearchFirstFree(WHead:WPointer):Integer;
+var
+  Max:Integer;
+begin
+  Max:=0;
+  WHead:=WHead^.Next;
+  while Whead<>nil do
   begin
-    repeat
-      Writeln('1. Список сотрудников');
-      Writeln('2. Список проектов');
-      Writeln;
-      Readln(Menu);
-      Writeln;
-    until (Menu = '1') or (Menu = '2');
-    Result:=Ord(Menu)-Ord('0');
+    if WHead^.Data.Code>Max then
+    Max:=WHead^.Data.Code;
   end;
+  Result:=Max+1;
+end;
+
+function ChooseList: Byte;
+var
+  Menu: Char;
+  isCorrect: Boolean;
+begin
+  isCorrect := False;
+  repeat
+    Writeln('1. Список сотрудников');
+    Writeln('2. Список проектов');
+    Writeln;
+    Readln(Menu);
+    Writeln;
+    isCorrect := (Menu = '1') or (Menu = '2');
+    if not isCorrect then
+      Writeln('Ошибка. Введите еще раз:');
+  until isCorrect;
+  Result := Ord(Menu) - Ord('0');
+end;
 
 function PGetPrev(PHead, ToFind: PPointer): PPointer;
 begin
@@ -229,26 +249,25 @@ begin
   PHead := nil;
 end;
 
-procedure EnterWorker(Head: WPointer);
+procedure EnterWorker(WHead: WPointer);
 begin
-  Writeln('Код сотрудника:');
-  Readln(Head^.Data.Code); // Сделать процедуру генерации
+  WHead^.Data.Code := SearchFirstFree(WHead);
   Writeln('Фамилия:');
-  Readln(Head^.Data.Surname);
+  Readln(WHead^.Data.Surname);
   Writeln('Имя:');
-  Readln(Head^.Data.Name);
+  Readln(WHead^.Data.Name);
   Writeln('Отчество:');
-  Readln(Head^.Data.MiddleName);
+  Readln(WHead^.Data.MiddleName);
   Writeln('Должность:');
-  Readln(Head^.Data.Position);
+  Readln(WHead^.Data.Position);
   Writeln('Количество часов в сутки:'); // Проверка на BYTE
-  Readln(Head^.Data.Hours);
+  Readln(WHead^.Data.Hours);
   Writeln('Код руководителя:'); // Проверка на Integer
-  Readln(Head^.Data.ManagerCode);
+  Readln(WHead^.Data.ManagerCode);
   Writeln;
 end;
 
-procedure EnterWorkers(Head: WPointer);
+procedure EnterWorkers(WHead: WPointer);
 var
   Menu: string;
   Temp: WPointer;
@@ -262,33 +281,33 @@ begin
     begin
       New(Temp);
       EnterWorker(Temp);
-      Head^.Next := Temp;
-      Head := Temp;
+      WHead^.Next := Temp;
+      WHead := Temp;
     end
     else if Menu <> '2' then
       Writeln('Ошибка');
   until Menu = '2';
-  Head^.Next := nil;
+  WHead^.Next := nil;
 end;
 
-procedure EnterProject(Head: PPointer);
+procedure EnterProject(PHead: PPointer);
 begin
   Writeln('Название проекта: ');
-  Readln(Head^.Data.Name);
+  Readln(PHead^.Data.Name);
   Writeln('Задания проекта:');
-  Readln(Head^.Data.Task);
+  Readln(PHead^.Data.Task);
   Writeln('Код исполнителя:');
-  Readln(Head^.Data.ExecCode); // Проверка на Integer
+  Readln(PHead^.Data.ExecCode); // Проверка на Integer
   Writeln('Код руководителя:');
-  Readln(Head^.Data.ManagerCode); // Проверка на Integer
+  Readln(PHead^.Data.ManagerCode); // Проверка на Integer
   Writeln('Дата выдачи:');
-  Readln(Head^.Data.IssDate);
+  Readln(PHead^.Data.IssDate);
   Writeln('Срок выполнения:');
-  Readln(Head^.Data.Term);
+  Readln(PHead^.Data.Term);
   Writeln;
 end;
 
-procedure EnterProjects(Head: PPointer);
+procedure EnterProjects(PHead: PPointer);
 
 var
   Menu: string;
@@ -303,81 +322,81 @@ begin
     begin
       New(Temp);
       EnterProject(Temp);
-      Head^.Next := Temp;
-      Head := Temp;
+      PHead^.Next := Temp;
+      PHead := Temp;
     end
     else if Menu <> '2' then
       Writeln('Ошибка');
   until Menu = '2';
-  Head^.Next := nil;
+  PHead^.Next := nil;
 end;
 
-procedure PrintWorker(Head: WPointer);
+procedure PrintWorker(WHead: WPointer);
 begin
-  Writeln('Код сотрудника: ', Head^.Data.Code);
-  Writeln('Фамилия: ', Head^.Data.Surname);
-  Writeln('Имя: ', Head^.Data.Name);
-  Writeln('Отчество: ', Head^.Data.MiddleName);
-  Writeln('Должность: ', Head^.Data.Position);
-  Writeln('Количество часов в сутки: ', Head^.Data.Hours);
-  Writeln('Код руководителя: ', Head^.Data.ManagerCode);
+  Writeln('Код сотрудника: ', WHead^.Data.Code);
+  Writeln('Фамилия: ', WHead^.Data.Surname);
+  Writeln('Имя: ', WHead^.Data.Name);
+  Writeln('Отчество: ', WHead^.Data.MiddleName);
+  Writeln('Должность: ', WHead^.Data.Position);
+  Writeln('Количество часов в сутки: ', WHead^.Data.Hours);
+  Writeln('Код руководителя: ', WHead^.Data.ManagerCode);
   Writeln;
 end;
 
-procedure PrintWorkers(Head: WPointer);
+procedure PrintWorkers(WHead: WPointer);
 
 begin
-  Head := Head^.Next;
-  if Head = nil then
+  WHead := WHead^.Next;
+  if WHead = nil then
     Writeln('Нет информации о сотрудниках')
   else
   begin
     Writeln('Данные о сотрудниках:');
-    while Head <> nil do
+    while WHead <> nil do
     begin
-      PrintWorker(Head);
-      Head := Head^.Next;
+      PrintWorker(WHead);
+      WHead := WHead^.Next;
     end;
   end;
 end;
 
-procedure PrintProject(Head: PPointer);
+procedure PrintProject(PHead: PPointer);
 begin
-  Writeln('Название проекта: ', Head^.Data.Name);
-  Writeln('Задания проекта: ', Head^.Data.Task);
-  Writeln('Код исполнителя: ', Head^.Data.ExecCode);
-  Writeln('Код руководителя: ', Head^.Data.ManagerCode);
-  Writeln('Дата выдачи: ', Head^.Data.IssDate);
-  Writeln('Срок выполнения: ', Head^.Data.Term);
+  Writeln('Название проекта: ', PHead^.Data.Name);
+  Writeln('Задания проекта: ', PHead^.Data.Task);
+  Writeln('Код исполнителя: ', PHead^.Data.ExecCode);
+  Writeln('Код руководителя: ', PHead^.Data.ManagerCode);
+  Writeln('Дата выдачи: ', PHead^.Data.IssDate);
+  Writeln('Срок выполнения: ', PHead^.Data.Term);
   Writeln;
 end;
 
-procedure PrintProjects(Head: PPointer);
+procedure PrintProjects(PHead: PPointer);
 
 begin
-  Head := Head^.Next;
-  if Head = nil then
+  PHead := PHead^.Next;
+  if PHead = nil then
     Writeln('Нет информации о проектах')
   else
   begin
     Writeln('Данные о проектах:');
-    while Head <> nil do
+    while PHead <> nil do
     begin
-      PrintProject(Head);
-      Head := Head^.Next;
+      PrintProject(PHead);
+      PHead := PHead^.Next;
     end;
   end;
 end;
 
 procedure MenuPrint(PHead: PPointer; WHead: WPointer);
 begin
-    Writeln('Выберите, что выводить:');
-    case ChooseList of
-      1:
-        PrintWorkers(WHead);
-      2:
-        PrintProjects(PHead);
-    end;
+  Writeln('Выберите, что выводить:');
+  case ChooseList of
+    1:
+      PrintWorkers(WHead);
+    2:
+      PrintProjects(PHead);
+  end;
 end;
 
 procedure MenuEnter(PHead: PPointer; WHead: WPointer);
@@ -394,5 +413,7 @@ begin
     end;
   end;
 end;
+
+
 
 end.
