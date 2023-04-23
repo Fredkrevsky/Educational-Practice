@@ -40,6 +40,7 @@ type
   FP = file of TProjectData;
   FW = file of TWorkerData;
 
+function CompareDate(Date1, Date2: string): Boolean;
 function SearchFirstFree(WHead:WPointer):Integer;
 function ChooseList: Byte;
 function PGetPrev(PHead, ToFind: PPointer): PPointer;
@@ -67,11 +68,41 @@ function PSearchField:Byte;
 procedure WSearch(WHead: WPointer; Field: Byte; Query: string);
 procedure PSearch(PHead: PPointer; Field: Byte; Query: string);
 procedure Search(PHead:PPointer; WHead:WPointer);
+function WSortField: Byte;
+function PSortField: Byte;
+function WCompare(Temp1, Temp2: WPointer; Field: Byte): Boolean;
+function PCompare(Temp1, Temp2: PPointer; Field: Byte): Boolean;
+procedure WSort(WHead: WPointer; WField: Byte);
+procedure PSort(PHead: PPointer; PField: Byte);
+procedure Sort(PHead: PPointer; WHead: WPointer);
 
 
 implementation
 
 uses System.SysUtils;
+
+function CompareDate(Date1, Date2: string): Boolean;
+var
+  y1, y2, m1, m2, d1, d2: Integer;
+begin
+  y1 := StrToInt(Copy(Date1, 7, 4));
+  y2 := StrToInt(Copy(Date2, 7, 4));
+  if y1 = y2 then
+  begin
+    m1 := StrToInt(Copy(Date1, 4, 2));
+    m2 := StrToInt(Copy(Date2, 4, 2));
+    if m1 = m2 then
+    begin
+      d1 := StrToInt(Copy(Date1, 1, 2));
+      d2 := StrToInt(Copy(Date2, 1, 2));
+      Result := d1 > d2;
+    end
+    else
+      Result := m1 > m2;
+  end
+  else
+    Result := y1 > y2;
+end;
 
 function SearchFirstFree(WHead:WPointer):Integer;
 var
@@ -561,6 +592,185 @@ begin
       Query:=GetQuery;
       PSearch(PHead, Field, Query);
     end;
+  end;
+end;
+
+function WSortField: Byte;
+var
+  Menu: Char;
+begin
+  repeat
+    Writeln('Выберите поле для сортировки:');
+    Writeln('1. Код сотрудника');
+    Writeln('2. ФИО');
+    Writeln('3. Должность');
+    Writeln('4. Количество рабочих часов в день');
+    Writeln('5. Код руководителя');
+    Writeln;
+    Readln(Menu);
+    Writeln;
+  until (Menu >= '1') and (Menu <= '5');
+  Result := Ord(Menu) - Ord('0');
+end;
+
+function PSortField: Byte;
+var
+  Menu: string;
+  isCorrect: Boolean;
+begin
+  isCorrect := False;
+  repeat
+    Writeln('Выберите поле для сортировки:');
+    Writeln('1. Имя проекта');
+    Writeln('2. Код исполнителя');
+    Writeln('3. Код руководителя');
+    Writeln('4. Дата получения');
+    Writeln('5. Срок сдачи');
+    Writeln;
+    Readln(Menu);
+    Writeln;
+    isCorrect := (Length(Menu) = 1) and (Menu >= '1') and (Menu <= '5');
+  until isCorrect;
+  Result := Ord(Menu[1]) - Ord('0');
+end;
+
+function WCompare(Temp1, Temp2: WPointer; Field: Byte): Boolean;
+begin
+  case Field of
+    1:
+      Result := Temp1^.Data.Code > Temp2^.Data.Code;
+    2:
+      begin
+        if AnsiUpperCase(Temp1^.Data.Surname) <>
+          AnsiUpperCase(Temp2^.Data.Surname) then
+          Result := AnsiUpperCase(Temp1^.Data.Surname) >
+            AnsiUpperCase(Temp2^.Data.Surname)
+        else if AnsiUpperCase(Temp1^.Data.Name) <>
+          AnsiUpperCase(Temp2^.Data.Name) then
+          Result := AnsiUpperCase(Temp1^.Data.Name) >
+            AnsiUpperCase(Temp2^.Data.Name)
+        else
+          Result := AnsiUpperCase(Temp1^.Data.MiddleName) >
+            AnsiUpperCase(Temp2^.Data.MiddleName);
+      end;
+    3:
+      Result := AnsiUpperCase(Temp1^.Data.Position) >
+        AnsiUpperCase(Temp2^.Data.Position);
+    4:
+      Result := Temp1^.Data.Hours > Temp2^.Data.Hours;
+    5:
+      Result := Temp1^.Data.ManagerCode > Temp2^.Data.ManagerCode;
+  end;
+end;
+
+function PCompare(Temp1, Temp2: PPointer; Field: Byte): Boolean;
+
+begin
+  case Field of
+    1:
+      Result := AnsiUpperCase(Temp1^.Data.Name) >
+        AnsiUpperCase(Temp2^.Data.Name);
+    2:
+      Result := Temp1^.Data.ExecCode > Temp2^.Data.ExecCode;
+    3:
+      Result := Temp1^.Data.ManagerCode > Temp2^.Data.ManagerCode;
+    4:
+      Result := CompareDate(Temp1^.Data.IssDate, Temp2^.Data.IssDate);
+    5:
+      Result := CompareDate(Temp1^.Data.Term, Temp2^.Data.Term);
+  end;
+end;
+
+procedure WSort(WHead: WPointer; WField: Byte);
+var
+  Swapped: Boolean;
+  NextNode, Temp, PrevNode, Current: WPointer;
+begin
+  repeat
+    Swapped := False;
+    PrevNode := WHead;
+    Current := WHead^.Next;
+    while Current^.Next <> nil do
+    begin
+      NextNode := Current^.Next;
+      if WCompare(Current, NextNode, WField) then
+      begin
+        Swapped := True;
+        Temp := NextNode^.Next;
+        NextNode^.Next := Current;
+        Current^.Next := Temp;
+        if PrevNode <> nil then
+          PrevNode^.Next := NextNode;
+        PrevNode := NextNode;
+        NextNode := Current^.Next;
+      end
+      else
+      begin
+        PrevNode := Current;
+        Current := NextNode;
+      end;
+    end;
+  until not Swapped;
+end;
+
+procedure PSort(PHead: PPointer; PField: Byte);
+var
+  Swapped: Boolean;
+  NextNode, Temp, PrevNode, Current: PPointer;
+begin
+  repeat
+    Swapped := False;
+    PrevNode := PHead;
+    Current := PHead^.Next;
+    while Current^.Next <> nil do
+    begin
+      NextNode := Current^.Next;
+      if PCompare(Current, NextNode, PField) then
+      begin
+        Swapped := True;
+        Temp := NextNode^.Next;
+        NextNode^.Next := Current;
+        Current^.Next := Temp;
+        if PrevNode <> nil then
+          PrevNode^.Next := NextNode;
+        PrevNode := NextNode;
+        NextNode := Current^.Next;
+      end
+      else
+      begin
+        PrevNode := Current;
+        Current := NextNode;
+      end;
+    end;
+  until not Swapped;
+end;
+
+procedure Sort(PHead: PPointer; WHead: WPointer);
+var
+  WField, PField: Byte;
+begin
+  Writeln('Выберите список для сортировки:');
+  case ChooseList of
+    1:
+      begin
+        if WHead^.Next = nil then
+          Write('Нет информации о сотрудниках', #13#10)
+        else
+        begin
+          WField := WSortField;
+          WSort(WHead, WField);
+        end;
+      end;
+    2:
+      begin
+        if PHead^.Next = nil then
+          Write('Нет информации о проектах', #13#10)
+        else
+        begin
+          PField := PSortField;
+          PSort(PHead, PField);
+        end;
+      end;
   end;
 end;
 
