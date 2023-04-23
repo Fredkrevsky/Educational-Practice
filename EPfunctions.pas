@@ -41,20 +41,16 @@ type
   FW = file of TWorkerData;
 
 function CompareDate(Date1, Date2: string): Boolean;
-function SearchFirstFree(WHead:WPointer):Integer;
+function SearchFirstFree(WHead: WPointer): Integer;
 function ChooseList: Byte;
 function PGetPrev(PHead, ToFind: PPointer): PPointer;
 function WGetPrev(WHead, ToFind: WPointer): WPointer;
-procedure PSwap(PHead, Temp1, Temp2: PPointer);
-procedure WSwap(WHead, Temp1, Temp2: WPointer);
-procedure PDelete(PHead, ToDelete: PPointer);
-procedure WDelete(WHead, ToDelete: WPointer);
 procedure DisposeAll(WHead: WPointer; PHead: PPointer);
 procedure WriteToFile(PHead: PPointer; WHead: WPointer);
 procedure ReadFromFile(PHead: PPointer; WHead: WPointer);
-procedure EnterWorker(WHead: WPointer);                     //Ввод
+procedure EnterWorker(WHead: WPointer); // Ввод
 procedure EnterWorkers(WHead: WPointer);
-procedure EnterProject(PHead: PPointer);                    //Ввод
+procedure EnterProject(PHead: PPointer); // Ввод
 procedure EnterProjects(PHead: PPointer);
 procedure PrintWorker(WHead: WPointer);
 procedure PrintWorkers(WHead: WPointer);
@@ -62,12 +58,12 @@ procedure PrintProject(PHead: PPointer);
 procedure PrintProjects(PHead: PPointer);
 procedure MenuPrint(PHead: PPointer; WHead: WPointer);
 procedure MenuEnter(PHead: PPointer; WHead: WPointer);
-function GetQuery:string;
-function WSearchField:Byte;
-function PSearchField:Byte;
-procedure WSearch(WHead: WPointer; Field: Byte; Query: string);
-procedure PSearch(PHead: PPointer; Field: Byte; Query: string);
-procedure Search(PHead:PPointer; WHead:WPointer);
+function GetQuery: string;
+function WSearchField: Byte;
+function PSearchField: Byte;
+procedure WSearch(WHead: WPointer; Field: Byte; Query: string; Mode: Char);
+procedure PSearch(PHead: PPointer; Field: Byte; Query: string; Mode: Char);
+procedure Search(PHead: PPointer; WHead: WPointer; Mode:Char);
 function WSortField: Byte;
 function PSortField: Byte;
 function WCompare(Temp1, Temp2: WPointer; Field: Byte): Boolean;
@@ -75,7 +71,6 @@ function PCompare(Temp1, Temp2: PPointer; Field: Byte): Boolean;
 procedure WSort(WHead: WPointer; WField: Byte);
 procedure PSort(PHead: PPointer; PField: Byte);
 procedure Sort(PHead: PPointer; WHead: WPointer);
-
 
 implementation
 
@@ -104,18 +99,19 @@ begin
     Result := y1 > y2;
 end;
 
-function SearchFirstFree(WHead:WPointer):Integer;
+function SearchFirstFree(WHead: WPointer): Integer;
 var
-  Max:Integer;
+  Max: Integer;
 begin
-  Max:=0;
-  WHead:=WHead^.Next;
-  while Whead<>nil do
+  Max := 0;
+  WHead := WHead^.Next;
+  while WHead <> nil do
   begin
-    if WHead^.Data.Code>Max then
-    Max:=WHead^.Data.Code;
+    if WHead^.Data.Code > Max then
+      Max := WHead^.Data.Code;
+    WHead := WHead^.Next;
   end;
-  Result:=Max+1;
+  Result := Max + 1;
 end;
 
 function ChooseList: Byte;
@@ -149,58 +145,6 @@ begin
   Result := WHead;
   while Result^.Next <> ToFind do
     Result := Result^.Next;
-end;
-
-procedure PSwap(PHead, Temp1, Temp2: PPointer);
-var
-  p1, n1: PPointer;
-  p2, n2: PPointer;
-begin
-
-  p1 := PGetPrev(PHead, Temp1);
-  n1 := Temp1^.Next;
-  p2 := PGetPrev(PHead, Temp2);
-  n2 := Temp2^.Next;
-
-  p1^.Next := Temp2;
-  Temp2^.Next := n1;
-  p2^.Next := Temp1;
-  Temp1^.Next := n2;
-end;
-
-procedure WSwap(WHead, Temp1, Temp2: WPointer);
-var
-  p1, n1: WPointer;
-  p2, n2: WPointer;
-begin
-
-  p1 := WGetPrev(WHead, Temp1);
-  n1 := Temp1^.Next;
-  p2 := WGetPrev(WHead, Temp2);
-  n2 := Temp2^.Next;
-
-  p1^.Next := Temp2;
-  Temp2^.Next := n1;
-  p2^.Next := Temp1;
-  Temp1^.Next := n2;
-end;
-
-procedure PDelete(PHead, ToDelete: PPointer);
-var
-  Temp: PPointer;
-begin
-  Temp := PGetPrev(PHead, ToDelete);
-  Temp^.Next := ToDelete^.Next;
-  Dispose(ToDelete);
-end;
-
-procedure WDelete(WHead, ToDelete: WPointer);
-var
-  Temp: WPointer;
-begin
-  Temp := WGetPrev(WHead, ToDelete);
-  Temp^.Next := ToDelete^.Next;
-  Dispose(ToDelete);
 end;
 
 procedure ReadFromFile(PHead: PPointer; WHead: WPointer);
@@ -447,7 +391,7 @@ begin
   end;
 end;
 
-function GetQuery:string;
+function GetQuery: string;
 begin
   Writeln;
   Writeln('Введите запрос:');
@@ -456,12 +400,12 @@ begin
   Writeln;
 end;
 
-function WSearchField:Byte;
-  var
+function WSearchField: Byte;
+var
   Menu: string;
   isCorrect: Boolean;
 begin
-  isCorrect:=False;
+  isCorrect := False;
   repeat
     Writeln('Выберите поле для поиска:');
     Writeln('1. Код сотрудника');
@@ -474,19 +418,19 @@ begin
     Writeln;
     Readln(Menu);
     Writeln;
-    isCorrect:=(Length(Menu) = 1) and (Menu>='1') and (Menu<='7');
+    isCorrect := (Length(Menu) = 1) and (Menu >= '1') and (Menu <= '7');
     if not isCorrect then
-    Writeln('Ошибка. Введите ещё раз');
+      Writeln('Ошибка. Введите ещё раз');
   until isCorrect;
   Result := Ord(Menu[1]) - Ord('0');
 end;
 
-function PSearchField:Byte;
-  var
+function PSearchField: Byte;
+var
   Menu: string;
   isCorrect: Boolean;
 begin
-  isCorrect:=False;
+  isCorrect := False;
   repeat
     Writeln('Выберите поле для поиска:');
     Writeln('1. Имя проекта');
@@ -498,100 +442,209 @@ begin
     Writeln;
     Readln(Menu);
     Writeln;
-    isCorrect:= (Length(Menu) = 1) and (Menu>='1') and (Menu<='6');
+    isCorrect := (Length(Menu) = 1) and (Menu >= '1') and (Menu <= '6');
     if not isCorrect then
-    Writeln('Ошибка. Введите ещё раз');
+      Writeln('Ошибка. Введите ещё раз');
   until isCorrect;
   Result := Ord(Menu[1]) - Ord('0');
 end;
 
-procedure WSearch(WHead: WPointer; Field: Byte; Query: string);
+procedure WMenuDelete(WHead, Current: WPointer);
 var
+  Menu: string;
+  isCorrect: Boolean;
+  Prev: WPointer;
+begin
+  repeat
+    Writeln('Удалить запись?');
+    Writeln('1. Да');
+    Writeln('2. Нет');
+    Readln(Menu);
+    isCorrect := (Menu = '1') or (Menu = '2');
+    if not isCorrect then
+    Writeln('Ошибка. Введите еще раз');
+  until isCorrect;
+  if Menu = '1' then
+  begin
+    Prev:=WGetPrev(WHead, Current);
+    Prev^.Next:=Current^.Next;
+    Dispose(Current);
+    Writeln('Запись удалена');
+  end;
+  Writeln;
+end;
+
+procedure PMenuDelete(PHead, Current: PPointer);
+var
+  Menu: string;
+  isCorrect: Boolean;
+  Prev: PPointer;
+begin
+  repeat
+    Writeln('Удалить запись?');
+    Writeln('1. Да');
+    Writeln('2. Нет');
+    Readln(Menu);
+    isCorrect := (Menu = '1') or (Menu = '2');
+    if not isCorrect then
+    Writeln('Ошибка. Введите еще раз');
+  until isCorrect;
+  if Menu = '1' then
+  begin
+    Prev:=PGetPrev(PHead, Current);
+    Prev^.Next:=Current^.Next;
+    Dispose(Current);
+    Writeln('Запись удалена');
+  end;
+  Writeln;
+end;
+
+procedure WMenuEdit(Current:WPointer);
+var
+  Menu: string;
+  isCorrect: Boolean;
+begin
+  repeat
+    Writeln('Изменить запись?');
+    Writeln('1. Да');
+    Writeln('2. Нет');
+    Readln(Menu);
+    isCorrect := (Menu = '1') or (Menu = '2');
+    if not isCorrect then
+    Writeln('Ошибка. Введите еще раз');
+  until isCorrect;
+  if Menu = '1' then
+  begin
+    EnterWorker(Current);
+    Writeln('Запись изменена');
+  end;
+  Writeln;
+end;
+
+procedure PMenuEdit(Current:PPointer);
+var
+  Menu: string;
+  isCorrect: Boolean;
+begin
+  repeat
+    Writeln('Изменить запись?');
+    Writeln('1. Да');
+    Writeln('2. Нет');
+    Readln(Menu);
+    isCorrect := (Menu = '1') or (Menu = '2');
+    if not isCorrect then
+    Writeln('Ошибка. Введите еще раз');
+  until isCorrect;
+  if Menu = '1' then
+  begin
+    EnterProject(Current);
+    Writeln('Запись изменена');
+  end;
+  Writeln;
+end;
+
+procedure WSearch(WHead: WPointer; Field: Byte; Query: string; Mode: Char);
+var
+  Current:WPointer;
   Exist, Match: Boolean;
 begin
   Exist := False;
-  WHead := WHead^.Next;
+  Current := WHead^.Next;
   Writeln('Результаты поиска:');
-  while WHead <> nil do
+  while Current <> nil do
   begin
     case Field of
       1:
-        Match := IntToStr(WHead^.Data.Code) = Query;
+        Match := IntToStr(Current^.Data.Code) = Query;
       2:
-        Match := WHead^.Data.Surname = Query;
+        Match := Current^.Data.Surname = Query;
       3:
-        Match := WHead^.Data.Name = Query;
+        Match := Current^.Data.Name = Query;
       4:
-        Match := WHead^.Data.MiddleName = Query;
+        Match := Current^.Data.MiddleName = Query;
       5:
-        Match := WHead^.Data.Position = Query;
+        Match := Current^.Data.Position = Query;
       6:
-        Match := IntToStr(WHead^.Data.Hours) = Query;
+        Match := IntToStr(Current^.Data.Hours) = Query;
       7:
-        Match := IntToStr(WHead^.Data.ManagerCode) = Query;
+        Match := IntToStr(Current^.Data.ManagerCode) = Query;
     end;
     if Match then
     begin
-      PrintWorker(WHead);
+      PrintWorker(Current);
+      case Mode of
+        'D':
+          WMenuDelete(WHead, Current);
+        'E':
+          WMenuEdit(Current);
+      end;
       Exist := True;
     end;
-    WHead := WHead^.Next;
+    Current := Current^.Next;
   end;
   if not Exist then
     Writeln('Ничего не найдено');
 end;
 
-procedure PSearch(PHead: PPointer; Field: Byte; Query: string);
+procedure PSearch(PHead: PPointer; Field: Byte; Query: string; Mode: Char);
 var
+  Current: PPointer;
   Exist, Match: Boolean;
 begin
   Exist := False;
-  PHead := PHead^.Next;
+  Current := PHead^.Next;
   Writeln('Результаты поиска:');
   while PHead <> nil do
   begin
     case Field of
       1:
-        Match := PHead^.Data.Name = Query;
+        Match := Current^.Data.Name = Query;
       2:
-        Match := PHead^.Data.Task = Query;
+        Match := Current^.Data.Task = Query;
       3:
-        Match := IntToStr(PHead^.Data.ExecCode) = Query;
+        Match := IntToStr(Current^.Data.ExecCode) = Query;
       4:
-        Match := IntToStr(PHead^.Data.ManagerCode) = Query;
+        Match := IntToStr(Current^.Data.ManagerCode) = Query;
       5:
-        Match := PHead^.Data.IssDate = Query;
+        Match := Current^.Data.IssDate = Query;
       6:
-        Match := PHead^.Data.Term = Query;
+        Match := Current^.Data.Term = Query;
     end;
     if Match then
     begin
-      PrintProject(PHead);
+      PrintProject(Current);
+      case Mode of
+        'D':
+          PMenuDelete(PHead, Current);
+        'E':
+          PMenuEdit(Current);
+      end;
       Exist := True;
     end;
-    PHead := PHead^.Next;
+    Current := Current^.Next;
   end;
   if not Exist then
     Writeln('Ничего не найдено');
 end;
 
-procedure Search(PHead:PPointer; WHead:WPointer);
-var Field:Integer;
-Query:string;
+procedure Search(PHead: PPointer; WHead: WPointer; Mode:Char);
+var
+  Field: Integer;
+  Query: string;
 begin
   case ChooseList of
     1:
-    begin
-      Field:=WSearchField;
-      Query:=GetQuery;
-      WSearch(WHead, Field, Query);
-    end;
+      begin
+        Field := WSearchField;
+        Query := GetQuery;
+        WSearch(WHead, Field, Query, Mode);
+      end;
     2:
-    begin
-      Field:=PSearchField;
-      Query:=GetQuery;
-      PSearch(PHead, Field, Query);
-    end;
+      begin
+        Field := PSearchField;
+        Query := GetQuery;
+        PSearch(PHead, Field, Query, Mode);
+      end;
   end;
 end;
 

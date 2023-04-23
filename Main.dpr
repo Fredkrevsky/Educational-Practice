@@ -6,7 +6,10 @@ uses
   System.SysUtils,
   EPfunctions;
 
+procedure DeleteRecord(WHead:WPointer; PHead:PPointer);
+begin
 
+end;
 
 procedure Menu;
 var
@@ -29,9 +32,9 @@ begin
     Writeln('2. Просмотр всего списка'); // Готово
     Writeln('3. Сортировка списка');      //Готово
     Writeln('4. Поиск данных с фильтром'); // Готово
-    Writeln('5. Добавление данных в список');
-    Writeln('6. Удаление данных из списка');
-    Writeln('7. Редактирование данных');
+    Writeln('5. Добавление данных в список');  //Готово
+    Writeln('6. Удаление данных из списка');   //Готово
+    Writeln('7. Редактирование данных');       //Готово
     Writeln('8. Сф');
     Writeln('9. Выйти из программы без сохранения'); // Готово
     Writeln('10. Выход с сохранением изменений'); // Готово
@@ -50,13 +53,13 @@ begin
         3:
           Sort(PHead, WHead);
         4:
-          Search(PHead, WHead);
+          Search(PHead, WHead, 'P');
         5:
           MenuEnter(PHead, WHead);
         6:
-          Writeln('Удаление...');
+          Search(PHead, WHead, 'D');
         7:
-          Writeln('Редактирование...');
+          Search(PHead, WHead, 'E');
         8:
           Writeln('СФ...');
         10:
