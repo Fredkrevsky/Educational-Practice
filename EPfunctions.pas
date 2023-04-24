@@ -48,13 +48,13 @@ function WGetPrev(WHead, ToFind: WPointer): WPointer;
 procedure DisposeAll(WHead: WPointer; PHead: PPointer);
 procedure WriteToFile(PHead: PPointer; WHead: WPointer);
 procedure ReadFromFile(PHead: PPointer; WHead: WPointer);
-procedure EnterWorker(WHead: WPointer); // Ввод
+procedure EnterWorker(WHead, Current: WPointer);
 procedure EnterWorkers(WHead: WPointer);
-procedure EnterProject(PHead: PPointer); // Ввод
+procedure EnterProject(Current: PPointer);
 procedure EnterProjects(PHead: PPointer);
-procedure PrintWorker(WHead: WPointer);
+procedure PrintWorker(Current: WPointer);
 procedure PrintWorkers(WHead: WPointer);
-procedure PrintProject(PHead: PPointer);
+procedure PrintProject(Current: PPointer);
 procedure PrintProjects(PHead: PPointer);
 procedure MenuPrint(PHead: PPointer; WHead: WPointer);
 procedure MenuEnter(PHead: PPointer; WHead: WPointer);
@@ -63,7 +63,7 @@ function WSearchField: Byte;
 function PSearchField: Byte;
 procedure WSearch(WHead: WPointer; Field: Byte; Query: string; Mode: Char);
 procedure PSearch(PHead: PPointer; Field: Byte; Query: string; Mode: Char);
-procedure Search(PHead: PPointer; WHead: WPointer; Mode:Char);
+procedure Search(PHead: PPointer; WHead: WPointer; Mode: Char);
 function WSortField: Byte;
 function PSortField: Byte;
 function WCompare(Temp1, Temp2: WPointer; Field: Byte): Boolean;
@@ -71,10 +71,58 @@ function PCompare(Temp1, Temp2: PPointer; Field: Byte): Boolean;
 procedure WSort(WHead: WPointer; WField: Byte);
 procedure PSort(PHead: PPointer; PField: Byte);
 procedure Sort(PHead: PPointer; WHead: WPointer);
+function IntCheck(ToCheck: string): Boolean;
+function CheckDate(ToCheck: string): Boolean;
 
 implementation
 
 uses System.SysUtils;
+
+function CheckDate(ToCheck: string): Boolean;
+const
+  TMonth: array [1 .. 12] of Integer = (31, 28, 31, 30, 31, 30, 31, 31, 30,
+    31, 30, 31);
+var
+  d, m, y: Integer;
+  isCorrect: Boolean;
+begin
+  isCorrect := (Length(ToCheck) = 10) and (ToCheck[3] = '.') and
+    (ToCheck[6] = '.');
+  if isCorrect then
+  begin
+    try
+      y := StrToInt(Copy(ToCheck, 7, 4));
+      m := StrToInt(Copy(ToCheck, 4, 2));
+      d := StrToInt(Copy(ToCheck, 1, 2));
+      isCorrect := (y > 0) and (m >= 1) and (m <= 12);
+      if isCorrect then
+      begin
+        if m = 2 then
+        begin
+          if (y mod 400 = 0) or (y mod 4 = 0) and (y mod 100 <> 0) then
+            isCorrect := (d >= 1) and (d <= 29)
+          else
+            isCorrect := (d >= 1) and (d <= 28);
+        end
+        else
+          isCorrect := (d >= 1) and (d <= TMonth[m]);
+      end;
+    except
+      isCorrect := False;
+    end;
+  end;
+  Result := isCorrect;
+end;
+
+function IntCheck(ToCheck: string): Boolean;
+begin
+  Result := True;
+  try
+    StrToInt(ToCheck);
+  except
+    Result := False;
+  end;
+end;
 
 function CompareDate(Date1, Date2: string): Boolean;
 var
@@ -230,29 +278,66 @@ begin
   end;
 end;
 
-procedure EnterWorker(WHead: WPointer);
+procedure EnterWorker(WHead, Current: WPointer);
+var
+  ToCheck: string;
+  IntFromCheck: Integer;
+  isCorrect: Boolean;
 begin
-  WHead^.Data.Code := SearchFirstFree(WHead);
+  Current^.Data.Code := SearchFirstFree(WHead);
   Writeln('Фамилия:');
-  Readln(WHead^.Data.Surname);
+  Readln(Current^.Data.Surname);
   Writeln('Имя:');
-  Readln(WHead^.Data.Name);
+  Readln(Current^.Data.Name);
   Writeln('Отчество:');
-  Readln(WHead^.Data.MiddleName);
+  Readln(Current^.Data.MiddleName);
   Writeln('Должность:');
-  Readln(WHead^.Data.Position);
-  Writeln('Количество часов в сутки:'); // Проверка на BYTE
-  Readln(WHead^.Data.Hours);
-  Writeln('Код руководителя:'); // Проверка на Integer
-  Readln(WHead^.Data.ManagerCode);
+  Readln(Current^.Data.Position);
+  repeat
+    Writeln('Количество часов в сутки:');
+    Readln(ToCheck);
+    isCorrect := False;
+    try
+      IntFromCheck := StrToInt(ToCheck);
+      isCorrect := (IntFromCheck >= 0) and (IntFromCheck <= 24);
+    finally
+      if not isCorrect then
+      begin
+        Writeln('Ошибка. Введите ещё раз:');
+        Writeln;
+      end
+      else
+        Current^.Data.Hours := IntFromCheck;
+    end;
+  until isCorrect;
+  repeat
+    Writeln('Код руководителя:');
+    Readln(ToCheck);
+    isCorrect := False;
+    try
+      IntFromCheck := StrToInt(ToCheck);
+      isCorrect := IntFromCheck > 0;
+    finally
+      if not isCorrect then
+      begin
+        Writeln('Ошибка. Введите ещё раз:');
+        Writeln;
+      end
+      else
+        Current^.Data.ManagerCode := IntFromCheck;
+    end;
+  until isCorrect;
   Writeln;
 end;
 
 procedure EnterWorkers(WHead: WPointer);
 var
   Menu: string;
-  Temp: WPointer;
+  Temp, Current: WPointer;
 begin
+  Current := WHead;
+  while Current^.Next <> nil do
+    Current := Current^.Next;
   repeat
     Writeln('Выберите пункт меню:');
     Writeln('1. Ввести данные о сотруднике');
@@ -261,30 +346,68 @@ begin
     if Menu = '1' then
     begin
       New(Temp);
-      EnterWorker(Temp);
-      WHead^.Next := Temp;
-      WHead := Temp;
+      EnterWorker(WHead, Temp);
+      Current^.Next := Temp;
+      Current := Temp;
+      Current^.Next := nil;
     end
     else if Menu <> '2' then
       Writeln('Ошибка');
   until Menu = '2';
-  WHead^.Next := nil;
 end;
 
-procedure EnterProject(PHead: PPointer);
+procedure EnterProject(Current: PPointer);
+var
+  ToCheck: string;
+  IntFromCheck: Integer;
+  isCorrect: Boolean;
 begin
   Writeln('Название проекта: ');
-  Readln(PHead^.Data.Name);
+  Readln(Current^.Data.Name);
   Writeln('Задания проекта:');
-  Readln(PHead^.Data.Task);
-  Writeln('Код исполнителя:');
-  Readln(PHead^.Data.ExecCode); // Проверка на Integer
-  Writeln('Код руководителя:');
-  Readln(PHead^.Data.ManagerCode); // Проверка на Integer
-  Writeln('Дата выдачи:');
-  Readln(PHead^.Data.IssDate);
-  Writeln('Срок выполнения:');
-  Readln(PHead^.Data.Term);
+  Readln(Current^.Data.Task);
+  repeat
+    Writeln('Код исполнителя:');
+    Readln(ToCheck);
+    isCorrect := False;
+    if IntCheck(ToCheck) then
+    begin
+      IntFromCheck := StrToInt(ToCheck);
+      isCorrect := IntFromCheck > 0;
+    end;
+    if not isCorrect then
+      Writeln('Ошибка. Введите ещё раз:');
+  until isCorrect;
+  Current^.Data.ExecCode := IntFromCheck;
+  repeat
+    Writeln('Код руководителя:');
+    Readln(ToCheck);
+    isCorrect := False;
+    if IntCheck(ToCheck) then
+    begin
+      IntFromCheck := StrToInt(ToCheck);
+      isCorrect := IntFromCheck > 0;
+    end;
+    if not isCorrect then
+      Writeln('Ошибка. Введите ещё раз:');
+  until isCorrect;
+  Current^.Data.ManagerCode := IntFromCheck;
+  repeat
+    Writeln('Дата выдачи:');
+    Readln(ToCheck);
+    isCorrect := CheckDate(ToCheck);
+    if not isCorrect then
+      Writeln('Ошибка. Введите ещё раз:');
+  until isCorrect;
+  Current^.Data.IssDate := ToCheck;
+  repeat
+    Writeln('Срок выполнения:');
+    Readln(ToCheck);
+    isCorrect := CheckDate(ToCheck);
+    if not isCorrect then
+      Writeln('Ошибка. Введите ещё раз:');
+  until isCorrect;
+  Current^.Data.Term := ToCheck;
   Writeln;
 end;
 
@@ -292,8 +415,11 @@ procedure EnterProjects(PHead: PPointer);
 
 var
   Menu: string;
-  Temp: PPointer;
+  Temp, Current: PPointer;
 begin
+  Current := PHead;
+  while Current^.Next <> nil do
+    Current := Current^.Next;
   repeat
     Writeln('Выберите пункт меню:');
     Writeln('1. Ввести данные о проекте');
@@ -312,43 +438,44 @@ begin
   PHead^.Next := nil;
 end;
 
-procedure PrintWorker(WHead: WPointer);
+procedure PrintWorker(Current: WPointer);
 begin
-  Writeln('Код сотрудника: ', WHead^.Data.Code);
-  Writeln('Фамилия: ', WHead^.Data.Surname);
-  Writeln('Имя: ', WHead^.Data.Name);
-  Writeln('Отчество: ', WHead^.Data.MiddleName);
-  Writeln('Должность: ', WHead^.Data.Position);
-  Writeln('Количество часов в сутки: ', WHead^.Data.Hours);
-  Writeln('Код руководителя: ', WHead^.Data.ManagerCode);
+  Writeln('Код сотрудника: ', Current^.Data.Code);
+  Writeln('Фамилия: ', Current^.Data.Surname);
+  Writeln('Имя: ', Current^.Data.Name);
+  Writeln('Отчество: ', Current^.Data.MiddleName);
+  Writeln('Должность: ', Current^.Data.Position);
+  Writeln('Количество часов в сутки: ', Current^.Data.Hours);
+  Writeln('Код руководителя: ', Current^.Data.ManagerCode);
   Writeln;
 end;
 
 procedure PrintWorkers(WHead: WPointer);
-
+var
+  Current: WPointer;
 begin
-  WHead := WHead^.Next;
-  if WHead = nil then
+  Current := WHead^.Next;
+  if Current = nil then
     Writeln('Нет информации о сотрудниках')
   else
   begin
     Writeln('Данные о сотрудниках:');
-    while WHead <> nil do
+    while Current <> nil do
     begin
-      PrintWorker(WHead);
-      WHead := WHead^.Next;
+      PrintWorker(Current);
+      Current := Current^.Next;
     end;
   end;
 end;
 
-procedure PrintProject(PHead: PPointer);
+procedure PrintProject(Current: PPointer);
 begin
-  Writeln('Название проекта: ', PHead^.Data.Name);
-  Writeln('Задания проекта: ', PHead^.Data.Task);
-  Writeln('Код исполнителя: ', PHead^.Data.ExecCode);
-  Writeln('Код руководителя: ', PHead^.Data.ManagerCode);
-  Writeln('Дата выдачи: ', PHead^.Data.IssDate);
-  Writeln('Срок выполнения: ', PHead^.Data.Term);
+  Writeln('Название проекта: ', Current^.Data.Name);
+  Writeln('Задания проекта: ', Current^.Data.Task);
+  Writeln('Код исполнителя: ', Current^.Data.ExecCode);
+  Writeln('Код руководителя: ', Current^.Data.ManagerCode);
+  Writeln('Дата выдачи: ', Current^.Data.IssDate);
+  Writeln('Срок выполнения: ', Current^.Data.Term);
   Writeln;
 end;
 
@@ -462,12 +589,12 @@ begin
     Readln(Menu);
     isCorrect := (Menu = '1') or (Menu = '2');
     if not isCorrect then
-    Writeln('Ошибка. Введите еще раз');
+      Writeln('Ошибка. Введите еще раз');
   until isCorrect;
   if Menu = '1' then
   begin
-    Prev:=WGetPrev(WHead, Current);
-    Prev^.Next:=Current^.Next;
+    Prev := WGetPrev(WHead, Current);
+    Prev^.Next := Current^.Next;
     Dispose(Current);
     Writeln('Запись удалена');
   end;
@@ -487,19 +614,19 @@ begin
     Readln(Menu);
     isCorrect := (Menu = '1') or (Menu = '2');
     if not isCorrect then
-    Writeln('Ошибка. Введите еще раз');
+      Writeln('Ошибка. Введите еще раз');
   until isCorrect;
   if Menu = '1' then
   begin
-    Prev:=PGetPrev(PHead, Current);
-    Prev^.Next:=Current^.Next;
+    Prev := PGetPrev(PHead, Current);
+    Prev^.Next := Current^.Next;
     Dispose(Current);
     Writeln('Запись удалена');
   end;
   Writeln;
 end;
 
-procedure WMenuEdit(Current:WPointer);
+procedure WMenuEdit(WHead, Current: WPointer);
 var
   Menu: string;
   isCorrect: Boolean;
@@ -511,17 +638,17 @@ begin
     Readln(Menu);
     isCorrect := (Menu = '1') or (Menu = '2');
     if not isCorrect then
-    Writeln('Ошибка. Введите еще раз');
+      Writeln('Ошибка. Введите еще раз');
   until isCorrect;
   if Menu = '1' then
   begin
-    EnterWorker(Current);
+    EnterWorker(WHead, Current);
     Writeln('Запись изменена');
   end;
   Writeln;
 end;
 
-procedure PMenuEdit(Current:PPointer);
+procedure PMenuEdit(Current: PPointer);
 var
   Menu: string;
   isCorrect: Boolean;
@@ -533,7 +660,7 @@ begin
     Readln(Menu);
     isCorrect := (Menu = '1') or (Menu = '2');
     if not isCorrect then
-    Writeln('Ошибка. Введите еще раз');
+      Writeln('Ошибка. Введите еще раз');
   until isCorrect;
   if Menu = '1' then
   begin
@@ -545,7 +672,7 @@ end;
 
 procedure WSearch(WHead: WPointer; Field: Byte; Query: string; Mode: Char);
 var
-  Current:WPointer;
+  Current: WPointer;
   Exist, Match: Boolean;
 begin
   Exist := False;
@@ -576,7 +703,7 @@ begin
         'D':
           WMenuDelete(WHead, Current);
         'E':
-          WMenuEdit(Current);
+          WMenuEdit(WHead, Current);
       end;
       Exist := True;
     end;
@@ -627,7 +754,7 @@ begin
     Writeln('Ничего не найдено');
 end;
 
-procedure Search(PHead: PPointer; WHead: WPointer; Mode:Char);
+procedure Search(PHead: PPointer; WHead: WPointer; Mode: Char);
 var
   Field: Integer;
   Query: string;
@@ -650,7 +777,8 @@ end;
 
 function WSortField: Byte;
 var
-  Menu: Char;
+  Menu: string;
+  isCorrect: Boolean;
 begin
   repeat
     Writeln('Выберите поле для сортировки:');
@@ -662,8 +790,9 @@ begin
     Writeln;
     Readln(Menu);
     Writeln;
-  until (Menu >= '1') and (Menu <= '5');
-  Result := Ord(Menu) - Ord('0');
+    isCorrect := (Length(Menu) = 1) and (Menu >= '1') and (Menu <= '5');
+  until isCorrect;
+  Result := Ord(Menu[1]) - Ord('0');
 end;
 
 function PSortField: Byte;

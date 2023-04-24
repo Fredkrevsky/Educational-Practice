@@ -5,39 +5,31 @@ program Main;
 uses
   System.SysUtils,
   EPfunctions;
-
-procedure DeleteRecord(WHead:WPointer; PHead:PPointer);
-begin
-
-end;
-
+  //Дебильные названия файлов
 procedure Menu;
 var
   isCorrect: Boolean;
   PunktOfMenu: string;
   PHead: PPointer;
   WHead: WPointer;
-  FileName: string;
-  P: FP;
-  W: FW;
 begin
-  isCorrect := False;
   New(PHead);
   New(WHead);
   PHead^.Next := nil;
   WHead^.Next := nil;
   repeat
+    isCorrect:=False;
     Writeln('Выберите пункт меню');
-    Writeln('1. Чтение данных из файла'); // Готово
-    Writeln('2. Просмотр всего списка'); // Готово
-    Writeln('3. Сортировка списка');      //Готово
-    Writeln('4. Поиск данных с фильтром'); // Готово
-    Writeln('5. Добавление данных в список');  //Готово
-    Writeln('6. Удаление данных из списка');   //Готово
-    Writeln('7. Редактирование данных');       //Готово
-    Writeln('8. Сф');
-    Writeln('9. Выйти из программы без сохранения'); // Готово
-    Writeln('10. Выход с сохранением изменений'); // Готово
+    Writeln('1. Чтение данных из файла');
+    Writeln('2. Просмотр всего списка');
+    Writeln('3. Сортировка списка');
+    Writeln('4. Поиск данных с фильтром');
+    Writeln('5. Добавление данных в список');
+    Writeln('6. Удаление данных из списка');
+    Writeln('7. Редактирование данных');
+    Writeln('8. Сф');                          //СДЕЛАТЬ 8 ПУНКТ
+    Writeln('9. Выйти из программы без сохранения');
+    Writeln('10. Выход с сохранением изменений');
     Writeln;
     Readln(PunktOfMenu);
     Writeln;
@@ -78,5 +70,4 @@ end;
 
 begin
   Menu;
-
 end.
