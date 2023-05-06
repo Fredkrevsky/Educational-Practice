@@ -58,7 +58,6 @@ procedure PrintProject(Current: PPointer);
 procedure PrintProjects(PHead: PPointer);
 procedure MenuPrint(PHead: PPointer; WHead: WPointer);
 procedure MenuEnter(PHead: PPointer; WHead: WPointer);
-function GetQuery: string;
 function WSearchField: Byte;
 function PSearchField: Byte;
 procedure WSearch(WHead: WPointer; Field: Byte; Query: string; Mode: Char);
@@ -73,6 +72,7 @@ procedure PSort(PHead: PPointer; PField: Byte);
 procedure Sort(PHead: PPointer; WHead: WPointer);
 function IntCheck(ToCheck: string): Boolean;
 function CheckDate(ToCheck: string): Boolean;
+procedure SearchBySurname(WHead: WPointer; PHead: PPointer);
 
 implementation
 
@@ -518,15 +518,6 @@ begin
   end;
 end;
 
-function GetQuery: string;
-begin
-  Writeln;
-  Writeln('Введите запрос:');
-  Writeln;
-  Readln(Result);
-  Writeln;
-end;
-
 function WSearchField: Byte;
 var
   Menu: string;
@@ -589,7 +580,7 @@ begin
     Readln(Menu);
     isCorrect := (Menu = '1') or (Menu = '2');
     if not isCorrect then
-      Writeln('Ошибка. Введите еще раз');
+      Writeln('Ошибка. Введите ещё раз');
   until isCorrect;
   if Menu = '1' then
   begin
@@ -614,7 +605,7 @@ begin
     Readln(Menu);
     isCorrect := (Menu = '1') or (Menu = '2');
     if not isCorrect then
-      Writeln('Ошибка. Введите еще раз');
+      Writeln('Ошибка. Введите ещё раз');
   until isCorrect;
   if Menu = '1' then
   begin
@@ -670,6 +661,83 @@ begin
   Writeln;
 end;
 
+procedure SearchBySurname(WHead: WPointer; PHead: PPointer);
+
+  function IsItMe: Boolean;
+  var
+    isCorrect: Boolean;
+    Menu: string;
+  begin
+    repeat
+      Writeln(#13#10, 'Это вы?');
+      Writeln('1. Да');
+      Writeln('2. Нет');
+      Writeln;
+      Readln(Menu);
+      isCorrect := (Menu = '1') or (Menu = '2');
+      if not isCorrect then
+        Writeln('Ошибка. Введите ещё раз');
+    until isCorrect;
+    Result := Menu = '1';
+  end;
+
+  procedure PrintManagerProjects(PHead: PPointer; MyCode: Integer);
+
+  var
+    Exist: Boolean;
+
+  begin
+    Exist := False;
+    PHead := PHead^.Next;
+    while PHead <> nil do
+    begin
+      if PHead^.Data.ManagerCode = MyCode then
+      begin
+        Exist := True;
+        PrintProject(PHead);
+      end;
+      PHead := PHead^.Next;
+    end;
+    if not Exist then
+      Writeln('Ничего не найдено');
+    Writeln;
+  end;
+
+var
+  Current: WPointer;
+  ItsMe: Boolean;
+  MyCode: Integer;
+  Surname: string;
+begin
+  Writeln('Введите фамилию руководителя');
+  Readln(Surname);
+  Writeln;
+  ItsMe := False;
+  Current := WHead^.Next;
+  while (Current <> nil) and not ItsMe do
+  begin
+    if Current^.Data.Surname = Surname then
+    begin
+      PrintWorker(Current);
+      ItsMe := IsItMe;
+    end;
+    if Not ItsMe then
+      Current := Current^.Next;
+  end;
+  if ItsMe then
+  begin
+    MyCode := Current^.Data.Code;
+    Writeln('Ваши проекты: ', #13#10);
+    PrintManagerProjects(PHead, MyCode);
+  end
+  else
+  begin
+    Writeln('Ничего не найдено');
+    Writeln;
+  end;
+
+end;
+
 procedure WSearch(WHead: WPointer; Field: Byte; Query: string; Mode: Char);
 var
   Current: WPointer;
@@ -721,7 +789,7 @@ begin
   Exist := False;
   Current := PHead^.Next;
   Writeln('Результаты поиска:');
-  while PHead <> nil do
+  while Current <> nil do
   begin
     case Field of
       1:
@@ -759,17 +827,22 @@ var
   Field: Integer;
   Query: string;
 begin
+
   case ChooseList of
     1:
       begin
         Field := WSearchField;
-        Query := GetQuery;
+        Writeln(#13#10, 'Введите запрос:');
+        Readln(Query);
+        Writeln;
         WSearch(WHead, Field, Query, Mode);
       end;
     2:
       begin
         Field := PSearchField;
-        Query := GetQuery;
+        Writeln(#13#10, 'Введите запрос');
+        Readln(Query);
+        Writeln;
         PSearch(PHead, Field, Query, Mode);
       end;
   end;
