@@ -40,39 +40,53 @@ type
   FP = file of TProjectData;
   FW = file of TWorkerData;
 
-function CompareDate(Date1, Date2: string): Boolean;
-function SearchFirstFree(WHead: WPointer): Integer;
-function ChooseList: Byte;
-function PGetPrev(PHead, ToFind: PPointer): PPointer;
-function WGetPrev(WHead, ToFind: WPointer): WPointer;
+{ReadFromFile(WHead, PHead);
+MenuPrint(WHead, PHead);
+Sort(WHead, PHead);
+Search(WHead, PHead, 'P');
+MenuEnter(WHead, PHead);
+Search(WHead, PHead, 'D');
+Search(WHead, PHead, 'E');
+ProjectsAndTasks(WHead, PHead);
+WriteToFile(WHead, PHead);
+DisposeAll(WHead, PHead);}
+
+//function CompareDate(Date1, Date2: string): Boolean;
+//function SearchFirstFree(WHead: WPointer): Integer;
+//function ChooseList: Byte;
+//function PGetPrev(PHead, ToFind: PPointer): PPointer;
+//function WGetPrev(WHead, ToFind: WPointer): WPointer;
 procedure DisposeAll(WHead: WPointer; PHead: PPointer);
-procedure WriteToFile(PHead: PPointer; WHead: WPointer);
-procedure ReadFromFile(PHead: PPointer; WHead: WPointer);
-procedure EnterWorker(WHead, Current: WPointer);
-procedure EnterWorkers(WHead: WPointer);
-procedure EnterProject(Current: PPointer);
-procedure EnterProjects(PHead: PPointer);
-procedure PrintWorker(Current: WPointer);
-procedure PrintWorkers(WHead: WPointer);
-procedure PrintProject(Current: PPointer);
-procedure PrintProjects(PHead: PPointer);
-procedure MenuPrint(PHead: PPointer; WHead: WPointer);
-procedure MenuEnter(PHead: PPointer; WHead: WPointer);
-function WSearchField: Byte;
-function PSearchField: Byte;
-procedure WSearch(WHead: WPointer; Field: Byte; Query: string; Mode: Char);
-procedure PSearch(PHead: PPointer; Field: Byte; Query: string; Mode: Char);
-procedure Search(PHead: PPointer; WHead: WPointer; Mode: Char);
-function WSortField: Byte;
-function PSortField: Byte;
-function WCompare(Temp1, Temp2: WPointer; Field: Byte): Boolean;
-function PCompare(Temp1, Temp2: PPointer; Field: Byte): Boolean;
-procedure WSort(WHead: WPointer; WField: Byte);
-procedure PSort(PHead: PPointer; PField: Byte);
-procedure Sort(PHead: PPointer; WHead: WPointer);
-function IntCheck(ToCheck: string): Boolean;
-function CheckDate(ToCheck: string): Boolean;
-procedure SearchBySurname(WHead: WPointer; PHead: PPointer);
+procedure WriteToFile(WHead: WPointer; PHead: PPointer);
+procedure ReadFromFile(WHead: WPointer; PHead: PPointer);
+//procedure EnterWorker(WHead, Current: WPointer);
+//procedure EnterWorkers(WHead: WPointer);
+//procedure EnterProject(Current: PPointer);
+//procedure EnterProjects(PHead: PPointer);
+//procedure PrintWorker(Current: WPointer);
+//procedure PrintWorkers(WHead: WPointer);
+//procedure PrintProject(Current: PPointer);
+//procedure PrintProjects(PHead: PPointer);
+procedure MenuPrint(WHead: WPointer; PHead: PPointer);
+procedure MenuEnter(WHead: WPointer; PHead: PPointer);
+//function WSearchField: Byte;
+//function PSearchField: Byte;
+//procedure WSearch(WHead: WPointer; Field: Byte; Query: string; Mode: Char);
+//procedure PSearch(PHead: PPointer; Field: Byte; Query: string; Mode: Char);
+procedure Search(WHead: WPointer; PHead: PPointer; Mode: Char);
+//function WSortField: Byte;
+//function PSortField: Byte;
+//function WCompare(Temp1, Temp2: WPointer; Field: Byte): Boolean;
+//function PCompare(Temp1, Temp2: PPointer; Field: Byte): Boolean;
+//procedure WSort(WHead: WPointer; WField: Byte);
+//procedure PSort(PHead: PPointer; PField: Byte);
+procedure Sort(WHead: WPointer; PHead: PPointer);
+//function IntCheck(ToCheck: string): Boolean;
+//function CheckDate(ToCheck: string): Boolean;
+//procedure SearchBySurname(WHead: WPointer; PHead: PPointer);
+//procedure WorkerTasks(PHead: PPointer; ProjectName: string; Code: Integer);
+//procedure WorkerMenu(WHead: WPointer; PHead: PPointer);
+procedure ProjectsAndTasks(WHead: WPointer; PHead: PPointer);
 
 implementation
 
@@ -170,7 +184,7 @@ begin
   isCorrect := False;
   repeat
     Writeln('1. Список сотрудников');
-    Writeln('2. Список проектов');
+    Writeln('2. Список работ');
     Writeln;
     Readln(Menu);
     Writeln;
@@ -195,7 +209,7 @@ begin
     Result := Result^.Next;
 end;
 
-procedure ReadFromFile(PHead: PPointer; WHead: WPointer);
+procedure ReadFromFile(WHead: WPointer; PHead: PPointer);
 var
   P: FP;
   W: FW;
@@ -204,9 +218,8 @@ var
   PTempInf: TProjectData;
   WTempInf: TWorkerData;
 begin
-  AssignFile(P,
-    'C:\Users\User\Desktop\УПОзн\Educational-Practice\ProjectsFile');
-  AssignFile(W, 'C:\Users\User\Desktop\УПОзн\Educational-Practice\WorkersFile');
+  AssignFile(P, 'ProjectsFile');
+  AssignFile(W, 'WorkersFile');
   Reset(P);
   Reset(W);
   while not EoF(P) do
@@ -231,14 +244,13 @@ begin
   CloseFile(W);
 end;
 
-procedure WriteToFile(PHead: PPointer; WHead: WPointer);
+procedure WriteToFile(WHead: WPointer; PHead: PPointer);
 var
   P: FP;
   W: FW;
 begin
-  AssignFile(P,
-    'C:\Users\User\Desktop\УПОзн\Educational-Practice\ProjectsFile');
-  AssignFile(W, 'C:\Users\User\Desktop\УПОзн\Educational-Practice\WorkersFile');
+  AssignFile(P, 'ProjectsFile');
+  AssignFile(W, 'WorkersFile');
   Rewrite(P);
   Rewrite(W);
   PHead := PHead^.Next;
@@ -404,6 +416,8 @@ begin
     Writeln('Срок выполнения:');
     Readln(ToCheck);
     isCorrect := CheckDate(ToCheck);
+    if isCorrect then
+      isCorrect := CompareDate(ToCheck, Current^.Data.IssDate);
     if not isCorrect then
       Writeln('Ошибка. Введите ещё раз:');
   until isCorrect;
@@ -429,13 +443,14 @@ begin
     begin
       New(Temp);
       EnterProject(Temp);
-      PHead^.Next := Temp;
-      PHead := Temp;
+      Current^.Next := Temp;
+      Current := Temp;
+      Current^.Next:= nil
     end
     else if Menu <> '2' then
       Writeln('Ошибка');
   until Menu = '2';
-  PHead^.Next := nil;
+  Current^.Next := nil;
 end;
 
 procedure PrintWorker(Current: WPointer);
@@ -471,7 +486,7 @@ end;
 procedure PrintProject(Current: PPointer);
 begin
   Writeln('Название проекта: ', Current^.Data.Name);
-  Writeln('Задания проекта: ', Current^.Data.Task);
+  Writeln('Задание проекта: ', Current^.Data.Task);
   Writeln('Код исполнителя: ', Current^.Data.ExecCode);
   Writeln('Код руководителя: ', Current^.Data.ManagerCode);
   Writeln('Дата выдачи: ', Current^.Data.IssDate);
@@ -496,7 +511,7 @@ begin
   end;
 end;
 
-procedure MenuPrint(PHead: PPointer; WHead: WPointer);
+procedure MenuPrint(WHead: WPointer; PHead: PPointer);
 begin
   Writeln('Выберите, что выводить:');
   case ChooseList of
@@ -507,7 +522,7 @@ begin
   end;
 end;
 
-procedure MenuEnter(PHead: PPointer; WHead: WPointer);
+procedure MenuEnter(WHead: WPointer; PHead: PPointer);
 begin
   Writeln('Выберите, что будете заполнять:');
   case ChooseList of
@@ -621,6 +636,7 @@ procedure WMenuEdit(WHead, Current: WPointer);
 var
   Menu: string;
   isCorrect: Boolean;
+  TempCode: Integer;
 begin
   repeat
     Writeln('Изменить запись?');
@@ -633,7 +649,9 @@ begin
   until isCorrect;
   if Menu = '1' then
   begin
+    TempCode := Current^.Data.Code;
     EnterWorker(WHead, Current);
+    Current^.Data.Code := TempCode;
     Writeln('Запись изменена');
   end;
   Writeln;
@@ -683,23 +701,86 @@ procedure SearchBySurname(WHead: WPointer; PHead: PPointer);
 
   procedure PrintManagerProjects(PHead: PPointer; MyCode: Integer);
 
+  type
+    TPtr = ^ManagerProject;
+
+    ManagerProject = record
+      Name: string[20];
+      Next: TPtr;
+    end;
+
+    function IsInList(Head: TPtr; Item: PPointer): Boolean;
+    begin
+      Result := False;
+      Head := Head^.Next;
+      while Head <> nil do
+      begin
+        if Item^.Data.Name = Head^.Name then
+          Result := True;
+        Head := Head^.Next;
+      end;
+    end;
+
+    procedure AddToList(Current: TPtr; Item: PPointer);
+    var
+      Temp: TPtr;
+    begin
+      New(Temp);
+      Temp.Name := Item^.Data.Name;
+      Temp^.Next := nil;
+      Current^.Next := Temp;
+    end;
+
+    procedure PrintList(Head: TPtr);
+    begin
+      Head := Head^.Next;
+      while Head <> nil do
+      begin
+        Writeln(Head^.Name);
+        Head := Head^.Next;
+      end;
+    end;
+
+    procedure DisposeList(var Head: TPtr);
+    var
+      Temp: TPtr;
+    begin
+      while Head <> nil do
+      begin
+        Temp := Head;
+        Head := Head^.Next;
+        Dispose(Temp);
+      end;
+    end;
+
   var
     Exist: Boolean;
-
+    PCurr: PPointer;
+    TCurr, THead: TPtr;
   begin
+    New(THead);
+    THead^.Next := nil;
+    TCurr := THead;
     Exist := False;
-    PHead := PHead^.Next;
-    while PHead <> nil do
+    PCurr := PHead^.Next;
+    while PCurr <> nil do
     begin
-      if PHead^.Data.ManagerCode = MyCode then
+      if PCurr^.Data.ManagerCode = MyCode then
       begin
         Exist := True;
-        PrintProject(PHead);
+        if not IsInList(THead, PCurr) then
+        begin
+          AddToList(TCurr, PCurr);
+          TCurr := TCurr^.Next;
+        end;
       end;
-      PHead := PHead^.Next;
+      PCurr := PCurr^.Next;
     end;
-    if not Exist then
+    if Exist then
+      PrintList(THead)
+    else
       Writeln('Ничего не найдено');
+    DisposeList(THead);
     Writeln;
   end;
 
@@ -822,7 +903,7 @@ begin
     Writeln('Ничего не найдено');
 end;
 
-procedure Search(PHead: PPointer; WHead: WPointer; Mode: Char);
+procedure Search(WHead: WPointer; PHead: PPointer; Mode: Char);
 var
   Field: Integer;
   Query: string;
@@ -986,7 +1067,7 @@ begin
         Temp := NextNode^.Next;
         NextNode^.Next := Current;
         Current^.Next := Temp;
-        if PrevNode <> nil then
+        if PrevNode <> nil then // Нужно вообще проверять?????
           PrevNode^.Next := NextNode;
         PrevNode := NextNode;
         NextNode := Current^.Next;
@@ -1000,7 +1081,7 @@ begin
   until not Swapped;
 end;
 
-procedure Sort(PHead: PPointer; WHead: WPointer);
+procedure Sort(WHead: WPointer; PHead: PPointer);
 var
   WField, PField: Byte;
 begin
@@ -1027,6 +1108,115 @@ begin
         end;
       end;
   end;
+end;
+
+procedure WorkerTasks(PHead: PPointer; ProjectName: string; Code: Integer);
+
+  procedure AddTask(TempCurrent, Current: PPointer);
+  begin
+    New(TempCurrent^.Next);
+    TempCurrent := TempCurrent^.Next;
+    TempCurrent^.Next := nil;
+    TempCurrent^.Data := Current^.Data;
+  end;
+
+  procedure PrintWorkerTasks(TempPHead: PPointer);
+  begin
+    if TempPHead^.Next = nil then
+    begin
+      Writeln('Нет заданий.');
+      Writeln;
+    end
+    else
+    begin
+      Writeln('Задания:');
+      Writeln;
+      PSort(TempPHead, 5);
+      TempPHead := TempPHead^.Next;
+      while TempPHead <> nil do
+      begin
+        PrintProject(TempPHead);
+        TempPHead := TempPHead^.Next;
+      end;
+    end;
+  end;
+
+  procedure DisposeTemp(TempPHead: PPointer);
+  var
+    PTemp, PCurrent: PPointer;
+  begin
+    PCurrent := TempPHead;
+    while PCurrent <> nil do
+    begin
+      PTemp := PCurrent;
+      PCurrent := PCurrent^.Next;
+      Dispose(PTemp);
+    end;
+  end;
+
+var
+  TempPHead, TempCurrent, Current: PPointer;
+
+begin
+  New(TempPHead);
+  TempPHead^.Next := nil;
+  Current := PHead^.Next;
+  TempCurrent := TempPHead;
+  while Current <> nil do
+  begin
+    if (Current^.Data.Name = ProjectName) and (Current^.Data.ExecCode = Code)
+    then
+    begin
+      AddTask(TempCurrent, Current);
+      TempCurrent := TempCurrent^.Next;
+    end;
+    Current := Current^.Next;
+  end;
+  PrintWorkerTasks(TempPHead);
+  DisposeTemp(TempPHead);
+end;
+
+procedure WorkerMenu(WHead: WPointer; PHead: PPointer);
+var
+  ProjectName: string;
+  Code: Integer;
+  isCorrect: Boolean;
+begin
+  isCorrect := False;
+  Writeln('Введите название проекта:');
+  Readln(ProjectName);
+  Writeln;
+  repeat
+    Writeln('Введите код сотрудника:');
+    try
+      Readln(Code);
+      Writeln;
+      isCorrect := True;
+    except
+      Writeln('Ошибка. Введите ещё раз:');
+    end;
+    Writeln;
+  until isCorrect;
+  WorkerTasks(PHead, ProjectName, Code);
+end;
+
+procedure ProjectsAndTasks(WHead: WPointer; PHead: PPointer);
+var
+  Menu: string;
+  isCorrect: Boolean;
+begin
+  isCorrect := False;
+  repeat
+    Writeln('Выберите пункт меню:');
+    Writeln('1. Проекты руководителя');
+    Writeln('2. Задачи сотрудника');
+    Readln(Menu);
+    isCorrect := (Menu = '1') or (Menu = '2');
+  until isCorrect;
+  if Menu = '1' then
+    SearchBySurname(WHead, PHead)
+  else
+    WorkerMenu(WHead, PHead);
 end;
 
 end.
