@@ -1,7 +1,7 @@
 unit EPfunctions;
 
 interface
-
+                             //Добавить "Выберите поле для..."
 type
 
   PPointer = ^TProject;
@@ -258,7 +258,6 @@ var
   isCorrect: Boolean;
 begin
   Current^.Data.Code := SearchFirstFree(WHead);
-  Writeln;
   Writeln('Фамилия:');
   Readln(Current^.Data.Surname);
   Writeln('Имя:');
@@ -336,7 +335,6 @@ var
   IntFromCheck: Integer;
   isCorrect: Boolean;
 begin
-  Writeln;
   Writeln('Название проекта: ');
   Readln(Current^.Data.Name);
   Writeln('Задания проекта:');
@@ -408,7 +406,7 @@ begin
       EnterProject(Temp);
       Current^.Next := Temp;
       Current := Temp;
-      Current^.Next := nil
+      Current^.Next:= nil
     end
     else if Menu <> '2' then
       Writeln('Ошибка');
@@ -434,10 +432,7 @@ var
 begin
   Current := WHead^.Next;
   if Current = nil then
-  begin
-    Writeln('Нет информации о сотрудниках');
-    Writeln;
-  end
+    Writeln('Нет информации о сотрудниках')
   else
   begin
     Writeln('Данные о сотрудниках:');
@@ -465,10 +460,7 @@ procedure PrintProjects(PHead: PPointer);
 begin
   PHead := PHead^.Next;
   if PHead = nil then
-  begin
-    Writeln('Нет информации о проектах');
-    Writeln;
-  end
+    Writeln('Нет информации о проектах')
   else
   begin
     Writeln('Данные о проектах:');
@@ -502,14 +494,13 @@ begin
   end;
 end;
 
-function WSearchField: Byte;
+function WField: Byte;
 var
   Menu: string;
   isCorrect: Boolean;
 begin
   isCorrect := False;
   repeat
-    Writeln('Введите номер поля для поиска:');
     Writeln('1. Код сотрудника');
     Writeln('2. Фамилия');
     Writeln('3. Имя');
@@ -527,14 +518,13 @@ begin
   Result := Ord(Menu[1]) - Ord('0');
 end;
 
-function PSearchField: Byte;
+function PField: Byte;
 var
   Menu: string;
   isCorrect: Boolean;
 begin
   isCorrect := False;
   repeat
-    Writeln('Выберите номер поля для поиска:');
     Writeln('1. Имя проекта');
     Writeln('2. Задание проекта');
     Writeln('3. Код исполнителя');
@@ -881,16 +871,18 @@ begin
   case ChooseList of
     1:
       begin
-        Field := WSearchField;
-        Writeln('Введите запрос:');
+        Writeln('Введите номер поля для поиска:');
+        Field := WField;
+        Writeln(#13#10, 'Введите запрос:');
         Readln(Query);
         Writeln;
         WSearch(WHead, Field, Query, Mode);
       end;
     2:
       begin
-        Field := PSearchField;
-        Writeln('Введите запрос:');
+        Writeln('Введите номер поля для поиска:');
+        Field := PField;
+        Writeln(#13#10, 'Введите запрос');
         Readln(Query);
         Writeln;
         PSearch(PHead, Field, Query, Mode);
@@ -1055,7 +1047,7 @@ end;
 
 procedure Sort(WHead: WPointer; PHead: PPointer);
 var
-  Field: Byte;
+  WField, PField: Byte;
 begin
   Writeln('Выберите список для сортировки:');
   case ChooseList of
@@ -1065,8 +1057,8 @@ begin
           Write('Нет информации о сотрудниках', #13#10)
         else
         begin
-          Field := WSortField;
-          WSort(WHead, Field);
+          WField := WSortField;
+          WSort(WHead, WField);
         end;
       end;
     2:
@@ -1075,8 +1067,8 @@ begin
           Write('Нет информации о проектах', #13#10)
         else
         begin
-          Field := PSortField;
-          PSort(PHead, Field);
+          PField := PSortField;
+          PSort(PHead, PField);
         end;
       end;
   end;

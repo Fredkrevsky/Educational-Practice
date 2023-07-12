@@ -408,7 +408,7 @@ begin
       EnterProject(Temp);
       Current^.Next := Temp;
       Current := Temp;
-      Current^.Next := nil
+      Current^.Next:= nil
     end
     else if Menu <> '2' then
       Writeln('Ошибка');
@@ -434,10 +434,10 @@ var
 begin
   Current := WHead^.Next;
   if Current = nil then
-  begin
+    begin
     Writeln('Нет информации о сотрудниках');
     Writeln;
-  end
+    end
   else
   begin
     Writeln('Данные о сотрудниках:');
@@ -465,10 +465,7 @@ procedure PrintProjects(PHead: PPointer);
 begin
   PHead := PHead^.Next;
   if PHead = nil then
-  begin
-    Writeln('Нет информации о проектах');
-    Writeln;
-  end
+    Writeln('Нет информации о проектах')
   else
   begin
     Writeln('Данные о проектах:');

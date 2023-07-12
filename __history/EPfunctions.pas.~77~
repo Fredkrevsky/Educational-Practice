@@ -258,7 +258,6 @@ var
   isCorrect: Boolean;
 begin
   Current^.Data.Code := SearchFirstFree(WHead);
-  Writeln;
   Writeln('Фамилия:');
   Readln(Current^.Data.Surname);
   Writeln('Имя:');
@@ -336,7 +335,6 @@ var
   IntFromCheck: Integer;
   isCorrect: Boolean;
 begin
-  Writeln;
   Writeln('Название проекта: ');
   Readln(Current^.Data.Name);
   Writeln('Задания проекта:');
@@ -408,7 +406,7 @@ begin
       EnterProject(Temp);
       Current^.Next := Temp;
       Current := Temp;
-      Current^.Next := nil
+      Current^.Next:= nil
     end
     else if Menu <> '2' then
       Writeln('Ошибка');
@@ -434,10 +432,7 @@ var
 begin
   Current := WHead^.Next;
   if Current = nil then
-  begin
-    Writeln('Нет информации о сотрудниках');
-    Writeln;
-  end
+    Writeln('Нет информации о сотрудниках')
   else
   begin
     Writeln('Данные о сотрудниках:');
@@ -465,10 +460,7 @@ procedure PrintProjects(PHead: PPointer);
 begin
   PHead := PHead^.Next;
   if PHead = nil then
-  begin
-    Writeln('Нет информации о проектах');
-    Writeln;
-  end
+    Writeln('Нет информации о проектах')
   else
   begin
     Writeln('Данные о проектах:');
@@ -882,7 +874,7 @@ begin
     1:
       begin
         Field := WSearchField;
-        Writeln('Введите запрос:');
+        Writeln(#13#10, 'Введите запрос:');
         Readln(Query);
         Writeln;
         WSearch(WHead, Field, Query, Mode);
@@ -890,7 +882,7 @@ begin
     2:
       begin
         Field := PSearchField;
-        Writeln('Введите запрос:');
+        Writeln(#13#10, 'Введите запрос:');
         Readln(Query);
         Writeln;
         PSearch(PHead, Field, Query, Mode);

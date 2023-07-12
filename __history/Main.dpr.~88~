@@ -1,6 +1,10 @@
-unit EPfunctions;
+program Main;
 
-interface
+{$APPTYPE CONSOLE}
+//////////////////////////При удалении работника удалять проекты
+//////////////////////////Редактирование по полю
+uses
+  System.SysUtils;
 
 type
 
@@ -40,18 +44,19 @@ type
   FP = file of TProjectData;
   FW = file of TWorkerData;
 
-procedure DisposeAll(WHead: WPointer; PHead: PPointer);
-procedure WriteToFile(WHead: WPointer; PHead: PPointer);
-procedure ReadFromFile(WHead: WPointer; PHead: PPointer);
-procedure MenuPrint(WHead: WPointer; PHead: PPointer);
-procedure MenuEnter(WHead: WPointer; PHead: PPointer);
-procedure Search(WHead: WPointer; PHead: PPointer; Mode: Char);
-procedure Sort(WHead: WPointer; PHead: PPointer);
-procedure ProjectsAndTasks(WHead: WPointer; PHead: PPointer);
-
-implementation
-
-uses System.SysUtils;
+function ThisManExists(WHead: WPointer; Code: Integer): Boolean;
+var
+  Current: WPointer;
+begin
+  Result := False;
+  Current := WHead^.Next;
+  while Current <> nil do
+  begin
+    if Current^.Data.Code = Code then
+      Result := True;
+    Current := Current^.Next;
+  end;
+end;
 
 function CheckDate(ToCheck: string): Boolean;
 const
@@ -258,7 +263,6 @@ var
   isCorrect: Boolean;
 begin
   Current^.Data.Code := SearchFirstFree(WHead);
-  Writeln;
   Writeln('Фамилия:');
   Readln(Current^.Data.Surname);
   Writeln('Имя:');
@@ -270,73 +274,71 @@ begin
   repeat
     Writeln('Количество часов в сутки:');
     Readln(ToCheck);
-    isCorrect := False;
     try
       IntFromCheck := StrToInt(ToCheck);
       isCorrect := (IntFromCheck >= 0) and (IntFromCheck <= 24);
-    finally
-      if not isCorrect then
-      begin
-        Writeln('Ошибка. Введите ещё раз:');
-        Writeln;
-      end
-      else
-        Current^.Data.Hours := IntFromCheck;
+    except
+      isCorrect := False;
+    end;
+    if not isCorrect then
+    begin
+      Writeln('Ошибка. Введите ещё раз:');
+      Writeln;
     end;
   until isCorrect;
+  Current^.Data.Hours := IntFromCheck;
   repeat
-    Writeln('Код руководителя:');
+    Writeln('Код руководителя:'); // Проверить, существует ли руководитель
     Readln(ToCheck);
-    isCorrect := False;
     try
       IntFromCheck := StrToInt(ToCheck);
-      isCorrect := IntFromCheck > 0;
-    finally
-      if not isCorrect then
-      begin
-        Writeln('Ошибка. Введите ещё раз:');
-        Writeln;
-      end
-      else
-        Current^.Data.ManagerCode := IntFromCheck;
+      isCorrect := ThisManExists(WHead, IntFromCheck) or (IntFromCheck = Current^.Data.Code);
+    except
+      isCorrect := False;
+    end;
+    if not isCorrect then
+    begin
+      Writeln('Ошибка. Введите ещё раз:');
+      Writeln;
     end;
   until isCorrect;
+  Current^.Data.ManagerCode := IntFromCheck;
   Writeln;
 end;
 
 procedure EnterWorkers(WHead: WPointer);
 var
   Menu: string;
+  isCorrect: Boolean;
   Temp, Current: WPointer;
 begin
   Current := WHead;
   while Current^.Next <> nil do
     Current := Current^.Next;
   repeat
-    Writeln('Выберите пункт меню:');
-    Writeln('1. Ввести данные о сотруднике');
-    Writeln('2. Выход');
-    Readln(Menu);
-    if Menu = '1' then
-    begin
-      New(Temp);
-      EnterWorker(WHead, Temp);
-      Current^.Next := Temp;
-      Current := Temp;
-      Current^.Next := nil;
-    end
-    else if Menu <> '2' then
-      Writeln('Ошибка');
+    New(Temp);
+    EnterWorker(WHead, Temp);
+    Current^.Next := Temp;
+    Current := Temp;
+    Current^.Next := nil;
+    repeat
+      Writeln('Выберите пункт меню:');
+      Writeln('1. Ввести ещё данные о сотруднике');
+      Writeln('2. Выход');
+      Readln(Menu);
+      isCorrect := (Menu = '1') or (Menu = '2');
+      if not isCorrect then
+        Writeln('Ошибка. Введите ещё раз:', #13#10);
+    until isCorrect;
   until Menu = '2';
 end;
 
-procedure EnterProject(Current: PPointer);
+procedure EnterProject(WHead: WPointer; Current: PPointer);
 var
   ToCheck: string;
   IntFromCheck: Integer;
   isCorrect: Boolean;
 begin
-  Writeln;
   Writeln('Название проекта: ');
   Readln(Current^.Data.Name);
   Writeln('Задания проекта:');
@@ -348,7 +350,7 @@ begin
     if IntCheck(ToCheck) then
     begin
       IntFromCheck := StrToInt(ToCheck);
-      isCorrect := IntFromCheck > 0;
+      isCorrect := ThisManExists(WHead, IntFromCheck);
     end;
     if not isCorrect then
       Writeln('Ошибка. Введите ещё раз:');
@@ -361,7 +363,7 @@ begin
     if IntCheck(ToCheck) then
     begin
       IntFromCheck := StrToInt(ToCheck);
-      isCorrect := IntFromCheck > 0;
+      isCorrect := ThisManExists(WHead, IntFromCheck);
     end;
     if not isCorrect then
       Writeln('Ошибка. Введите ещё раз:');
@@ -380,7 +382,7 @@ begin
     Readln(ToCheck);
     isCorrect := CheckDate(ToCheck);
     if isCorrect then
-      isCorrect := CompareDate(ToCheck, Current^.Data.IssDate);
+      isCorrect := not CompareDate(Current^.Data.IssDate, ToCheck);
     if not isCorrect then
       Writeln('Ошибка. Введите ещё раз:');
   until isCorrect;
@@ -388,32 +390,38 @@ begin
   Writeln;
 end;
 
-procedure EnterProjects(PHead: PPointer);
+procedure EnterProjects(WHead: WPointer; PHead: PPointer);
 
 var
   Menu: string;
+  isCorrect: Boolean;
   Temp, Current: PPointer;
 begin
-  Current := PHead;
-  while Current^.Next <> nil do
-    Current := Current^.Next;
-  repeat
-    Writeln('Выберите пункт меню:');
-    Writeln('1. Ввести данные о проекте');
-    Writeln('2. Выход');
-    Readln(Menu);
-    if Menu = '1' then
-    begin
+  if WHead^.Next <> nil then
+  begin
+    Current := PHead;
+    while Current^.Next <> nil do
+      Current := Current^.Next;
+    repeat
       New(Temp);
-      EnterProject(Temp);
+      EnterProject(WHead, Temp);
       Current^.Next := Temp;
       Current := Temp;
-      Current^.Next := nil
-    end
-    else if Menu <> '2' then
-      Writeln('Ошибка');
-  until Menu = '2';
-  Current^.Next := nil;
+      Current^.Next := nil;
+      repeat
+        Writeln('Выберите пункт меню:');
+        Writeln('1. Ввести ещё данные о проекте');
+        Writeln('2. Выход');
+        Readln(Menu);
+        isCorrect := (Menu = '1') or (Menu = '2');
+        if not isCorrect then
+          Writeln('Ошибка. Введите ещё раз:', #13#10);
+      until isCorrect;
+    until Menu = '2';
+    Current^.Next := nil;
+  end
+  else
+    Writeln('Нет данных о возможном руководителе проекта. Заполните список сотрудников.', #13#10);
 end;
 
 procedure PrintWorker(Current: WPointer);
@@ -498,7 +506,7 @@ begin
     1:
       EnterWorkers(WHead);
     2:
-      EnterProjects(PHead);
+      EnterProjects(WHead, PHead);
   end;
 end;
 
@@ -601,6 +609,24 @@ begin
   Writeln;
 end;
 
+procedure DeleteWorkerProjects(Code: Integer; PHead: PPointer);
+var Current, Temp: PPointer;
+begin
+  Current:=PHead^.Next;
+  while Current<>nil do
+  begin
+    if (Current^.Data.ExecCode = Code) or (Current^.Data.ManagerCode = Code) then
+    begin
+      Temp := PGetPrev(PHead, Current);
+      Temp^.Next := Current^.Next;
+      Dispose(Current);
+      Current:=Temp^.Next;
+    end
+    else
+    Current:=Current^.Next;
+  end;
+end;
+
 procedure WMenuEdit(WHead, Current: WPointer);
 var
   Menu: string;
@@ -626,7 +652,7 @@ begin
   Writeln;
 end;
 
-procedure PMenuEdit(Current: PPointer);
+procedure PMenuEdit(WHead: WPointer; Current: PPointer);
 var
   Menu: string;
   isCorrect: Boolean;
@@ -642,7 +668,7 @@ begin
   until isCorrect;
   if Menu = '1' then
   begin
-    EnterProject(Current);
+    EnterProject(WHead, Current);
     Writeln('Запись изменена');
   end;
   Writeln;
@@ -831,7 +857,7 @@ begin
     Writeln('Ничего не найдено');
 end;
 
-procedure PSearch(PHead: PPointer; Field: Byte; Query: string; Mode: Char);
+procedure PSearch(WHead: WPointer; PHead: PPointer; Field: Byte; Query: string; Mode: Char);
 var
   Current: PPointer;
   Exist, Match: Boolean;
@@ -862,7 +888,7 @@ begin
         'D':
           PMenuDelete(PHead, Current);
         'E':
-          PMenuEdit(Current);
+          PMenuEdit(WHead, Current);
       end;
       Exist := True;
     end;
@@ -893,7 +919,7 @@ begin
         Writeln('Введите запрос:');
         Readln(Query);
         Writeln;
-        PSearch(PHead, Field, Query, Mode);
+        PSearch(WHead, PHead, Field, Query, Mode);
       end;
   end;
 end;
@@ -1103,7 +1129,7 @@ procedure WorkerTasks(PHead: PPointer; ProjectName: string; Code: Integer);
     begin
       Writeln('Задания:');
       Writeln;
-      PSort(TempPHead, 5);
+      PSort(TempPHead, 6);
       TempPHead := TempPHead^.Next;
       while TempPHead <> nil do
       begin
@@ -1177,7 +1203,6 @@ var
   Menu: string;
   isCorrect: Boolean;
 begin
-  isCorrect := False;
   repeat
     Writeln('Выберите пункт меню:');
     Writeln('1. Проекты руководителя');
@@ -1190,5 +1215,64 @@ begin
   else
     WorkerMenu(WHead, PHead);
 end;
+
+var
+  isCorrect: Boolean;
+  PunktOfMenu: string;
+  PHead: PPointer;
+  WHead: WPointer;
+
+begin
+  New(PHead);
+  New(WHead);
+  PHead^.Next := nil;
+  WHead^.Next := nil;
+  repeat
+    Writeln('Выберите пункт меню:');
+    Writeln('1. Чтение данных из файла');
+    Writeln('2. Просмотр всего списка');
+    Writeln('3. Сортировка списка');
+    Writeln('4. Поиск данных с фильтром');
+    Writeln('5. Добавление данных в список');
+    Writeln('6. Удаление данных из списка');
+    Writeln('7. Редактирование данных');
+    Writeln('8. Руководителю/сотруднику');
+    Writeln('9. Выход из программы без сохранения');
+    Writeln('10. Выход с сохранением изменений');
+    Writeln;
+    Readln(PunktOfMenu);
+    Writeln;
+    isCorrect := (Length(PunktOfMenu) = 1) and (PunktOfMenu >= '1') and
+      (PunktOfMenu <= '9') or (PunktOfMenu = '10');
+    if isCorrect then
+    begin
+      case StrToInt(PunktOfMenu) of
+        1:
+          ReadFromFile(WHead, PHead);
+        2:
+          MenuPrint(WHead, PHead);
+        3:
+          Sort(WHead, PHead);
+        4:
+          Search(WHead, PHead, 'P');
+        5:
+          MenuEnter(WHead, PHead);
+        6:
+          Search(WHead, PHead, 'D');
+        7:
+          Search(WHead, PHead, 'E');
+        8:
+          ProjectsAndTasks(WHead, PHead);
+        10:
+          WriteToFile(WHead, PHead);
+      end;
+    end
+    else
+    begin
+      Writeln('Ошибка. Введите ещё раз:');
+      Writeln;
+    end;
+  until (PunktOfMenu = '10') or (PunktOfMenu = '9');
+  DisposeAll(WHead, PHead);
 
 end.
